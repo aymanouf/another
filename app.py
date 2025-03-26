@@ -1,29 +1,7 @@
 import streamlit as st
-import os
-import sys
-import subprocess
-
-# Install missing packages
-def install_packages():
-    try:
-        import pandas
-        import plotly.express
-    except ImportError:
-        st.write("Installing required packages...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pandas", "plotly"])
-        st.experimental_rerun()
-
-# Call the installation function
-install_packages()
-
-# Now import the packages
-import pandas as pd
 import datetime
 import json
-import os
-from decimal import Decimal
-import plotly.express as px
-import plotly.graph_objects as go
+import pandas as pd
 
 # Set page configuration
 st.set_page_config(
@@ -246,54 +224,42 @@ def show_dashboard():
     else:
         st.info("No transactions recorded yet.")
     
-    # Budget overview with charts
+    # Budget overview with tables
     st.subheader("Budget Overview")
     
     col1, col2 = st.columns(2)
     
     with col1:
         # Income budget vs actual
+        st.write("**Income: Budget vs. Actual**")
         income_data = []
         for category, values in st.session_state.budget["income"].items():
             income_data.append({
                 "Category": category,
-                "Budget": values["budget"],
-                "Actual": values["actual"]
+                "Budget": f"KD {values['budget']:.2f}",
+                "Actual": f"KD {values['actual']:.2f}",
+                "Variance": f"KD {values['actual'] - values['budget']:.2f}"
             })
         
         if income_data:
             income_df = pd.DataFrame(income_data)
-            try:
-                fig = px.bar(income_df, x="Category", y=["Budget", "Actual"], 
-                            title="Income: Budget vs. Actual",
-                            barmode="group",
-                            color_discrete_sequence=["#1f77b4", "#2ca02c"])
-                st.plotly_chart(fig, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error creating chart: {e}")
-                st.dataframe(income_df)
+            st.dataframe(income_df, use_container_width=True)
     
     with col2:
         # Expense budget vs actual
+        st.write("**Expenses: Budget vs. Actual**")
         expense_data = []
         for category, values in st.session_state.budget["expenses"].items():
             expense_data.append({
                 "Category": category,
-                "Budget": values["budget"],
-                "Actual": values["actual"]
+                "Budget": f"KD {values['budget']:.2f}",
+                "Actual": f"KD {values['actual']:.2f}",
+                "Variance": f"KD {values['actual'] - values['budget']:.2f}"
             })
         
         if expense_data:
             expense_df = pd.DataFrame(expense_data)
-            try:
-                fig = px.bar(expense_df, x="Category", y=["Budget", "Actual"], 
-                            title="Expenses: Budget vs. Actual",
-                            barmode="group",
-                            color_discrete_sequence=["#d62728", "#ff7f0e"])
-                st.plotly_chart(fig, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error creating chart: {e}")
-                st.dataframe(expense_df)
+            st.dataframe(expense_df, use_container_width=True)
     
     # Quick actions
     st.subheader("Quick Actions")
@@ -533,56 +499,11 @@ def show_budget():
             expense_df = pd.DataFrame(expense_data)
             st.dataframe(expense_df, use_container_width=True)
     
-    # Budget visualization
+    # Budget visualization as text
     st.subheader("Budget Visualization")
-    
-    try:
-        # Budget vs. Actual bar chart
-        fig = go.Figure()
-        
-        # Add budget bars
-        fig.add_trace(go.Bar(
-            name='Income Budget',
-            x=['Income'],
-            y=[total_income_budget],
-            marker_color='rgba(44, 160, 44, 0.7)'
-        ))
-        
-        fig.add_trace(go.Bar(
-            name='Income Actual',
-            x=['Income'],
-            y=[total_income_actual],
-            marker_color='rgba(44, 160, 44, 1.0)'
-        ))
-        
-        fig.add_trace(go.Bar(
-            name='Expense Budget',
-            x=['Expense'],
-            y=[total_expense_budget],
-            marker_color='rgba(214, 39, 40, 0.7)'
-        ))
-        
-        fig.add_trace(go.Bar(
-            name='Expense Actual',
-            x=['Expense'],
-            y=[total_expense_actual],
-            marker_color='rgba(214, 39, 40, 1.0)'
-        ))
-        
-        # Update layout
-        fig.update_layout(
-            title='Budget vs. Actual Summary',
-            xaxis_title='Category',
-            yaxis_title='Amount (KD)',
-            barmode='group'
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Error creating chart: {e}")
-        # Display as text instead
-        st.write(f"Income Budget: KD {total_income_budget:.2f}, Actual: KD {total_income_actual:.2f}")
-        st.write(f"Expense Budget: KD {total_expense_budget:.2f}, Actual: KD {total_expense_actual:.2f}")
+    st.write(f"Income Budget: KD {total_income_budget:.2f}, Actual: KD {total_income_actual:.2f}")
+    st.write(f"Expense Budget: KD {total_expense_budget:.2f}, Actual: KD {total_expense_actual:.2f}")
+    st.write(f"Net Budget: KD {total_income_budget - total_expense_budget:.2f}, Actual: KD {total_income_actual - total_expense_actual:.2f}")
 
 # Events function
 def show_events():
@@ -627,8 +548,8 @@ def show_events():
     st.subheader("Planned Events")
     
     if st.session_state.events:
-        events_df = pd.DataFrame(st.session_state.events)
         try:
+            events_df = pd.DataFrame(st.session_state.events)
             # Format currency columns
             events_df["projected_income"] = events_df["projected_income"].apply(lambda x: f"KD {x:.2f}")
             events_df["projected_expenses"] = events_df["projected_expenses"].apply(lambda x: f"KD {x:.2f}")
